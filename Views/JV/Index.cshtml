@@ -1,0 +1,225 @@
+﻿@model JV_Calculator.Models.Partner
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JV Partner Entry Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .partner {
+            background: white;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 6px;
+            margin-top: 4px;
+        }
+
+        .actions {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            background: #007bff;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+            .btn:hover {
+                background: #0056b3;
+            }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>JV Calculator - Partner Entry</h2>
+        <form id="partnerForm" onsubmit="return false;">
+            <div class="partner">
+                <label>
+                    Company Name:
+                    <input type="text" id="Company" required>
+                </label>
+                <label>
+                    Turnover 1:
+                    <input type="number" id="Turnover1" required>
+                </label>
+                <label>
+                    Year 1:
+                    <input type="number" id="Year1" required>
+                </label>
+                <label>
+                    Turnover 2:
+                    <input type="number" id="Turnover2" required>
+                </label>
+                <label>
+                    Year 2:
+                    <input type="number" id="Year2" required>
+                </label>
+                <label>
+                    Grading:
+                    <input type="text" id="Grading" placeholder="e.g., 3CE" required>
+                </label>
+                <label>
+                    Capital Contribution:
+                    <input type="number" id="CapitalContribution" required>
+                </label>
+                <label>
+                    <input type="checkbox" id="IsLeadPartner"> Lead Partner
+                </label>
+                <label>
+                    <input type="checkbox" id="IsActive" checked> Active
+                </label>
+
+                <div class="actions">
+                    <button class="btn" type="button" onclick="AddCompany()">Add Company</button>
+                </div>
+                <div id="errorMessages" class="error"></div>
+            </div>
+        </form>
+        <div class="actions">
+            <button class="btn" type="button" onclick="Submit_list()">Submit</button>
+        </div>
+
+        <div>
+            <h3>Partner List</h3>
+            <table id="myData" border="1" cellpadding="6" cellspacing="0" style="width:100%; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <thead style="background: #007bff; color: white;">
+                    <tr>
+                        <th>Company</th>
+                        <th>TurnOver 1</th>
+                        <th>Year 1</th>
+                        <th>TurnOver 2</th>
+                        <th>Year 2</th>
+                        <th>Grading</th>
+                        <th>Capital</th>
+                        <th>Lead</th>
+                        <th>Active</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+    <div hidden>
+        @using (Html.BeginForm("GetCompanies", "JV", FormMethod.Post))
+        {
+            <input hidden name="CompGrid" id="GridField" />
+            <button type="submit" id="formSubmit">Calculate</button>
+        }
+    </div>
+
+
+    @if (TempData["Result"] != null)
+    {
+        <script>
+            const errorDiv = document.getElementById('errorMessages');
+             errorDiv.innerHTML = '@TempData["Result"]';
+        </script>
+    }
+
+    <script>
+
+        function Submit_list()
+        {
+            const table = document.getElementById('myData').getElementsByTagName('tbody')[0];
+            const partners = [];
+
+            for (let i = 0; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const partner = {
+                    Company: row.cells[0].textContent,
+                    Turnover1: parseFloat(row.cells[1].textContent),
+                    Year1: parseInt(row.cells[2].textContent),
+                    Turnover2: parseFloat(row.cells[3].textContent),
+                    Year2: parseInt(row.cells[4].textContent),
+                    Grading: row.cells[5].textContent,
+                    CapitalContribution: parseFloat(row.cells[6].textContent),
+                    IsLeadPartner: row.cells[7].textContent === "Yes",
+                    IsActive: row.cells[8].textContent === "Yes"
+                };
+                partners.push(partner);
+            }
+
+
+            document.getElementById('GridField').value = JSON.stringify(partners);
+
+
+            document.getElementById('formSubmit').click();
+        }
+
+        function AddCompany() {
+            const errorDiv = document.getElementById('errorMessages');
+            errorDiv.innerHTML = '';
+
+            const Company = document.getElementById('Company').value.trim();
+            const Turnover1 = document.getElementById('Turnover1').value;
+            const Year1 = document.getElementById('Year1').value;
+            const Turnover2 = document.getElementById('Turnover2').value;
+            const Year2 = document.getElementById('Year2').value;
+            const Grading = document.getElementById('Grading').value.trim();
+            const CapitalContribution = document.getElementById('CapitalContribution').value;
+            const IsLeadPartner = document.getElementById('IsLeadPartner').checked;
+            const IsActive = document.getElementById('IsActive').checked;
+
+            // Basic validation
+            if (!Company || !Turnover1 || !Year1 || !Turnover2 || !Year2 || !Grading || !CapitalContribution) {
+                errorDiv.innerHTML = "❌ Please enter all required data.";
+                return;
+            }
+
+            const table = document.getElementById('myData').getElementsByTagName('tbody')[0];
+            const newRow = table.insertRow();
+
+            newRow.insertCell(0).textContent = Company;
+            newRow.insertCell(1).textContent = Turnover1;
+            newRow.insertCell(2).textContent = Year1;
+            newRow.insertCell(3).textContent = Turnover2;
+            newRow.insertCell(4).textContent = Year2;
+            newRow.insertCell(5).textContent = Grading;
+            newRow.insertCell(6).textContent = CapitalContribution;
+            newRow.insertCell(7).textContent = IsLeadPartner ? "Yes" : "No";
+            newRow.insertCell(8).textContent = IsActive ? "Yes" : "No";
+
+            // Clear form fields
+            document.getElementById('partnerForm').reset();
+        }
+    </script>
+</body>
+</html>
